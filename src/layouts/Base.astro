@@ -1,0 +1,67 @@
+---
+const { title = "Report Portal" } = Astro.props;
+---
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{title}</title>
+    <style>
+      :root { --bg:#0b0f14; --card:#111827; --text:#e5e7eb; --muted:#9ca3af; --border:#1f2937; }
+      body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial; background: var(--bg); color: var(--text); }
+      a { color: inherit; }
+      .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 18px; }
+      .top { display:flex; justify-content:space-between; align-items:center; gap: 12px; }
+      .badge { display:inline-flex; align-items:center; gap:8px; padding: 4px 10px; border:1px solid var(--border); border-radius: 999px; font-size: 12px; color: var(--muted); }
+      .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 18px; }
+      .card { background: var(--card); border:1px solid var(--border); border-radius: 16px; padding: 14px; }
+      .card h3 { margin: 0 0 6px 0; font-size: 16px; }
+      .card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+      .row { display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+      .kpi { font-size: 12px; color: var(--muted); border: 1px solid var(--border); padding: 4px 8px; border-radius: 10px; }
+      .search { width: 100%; max-width: 360px; padding: 10px 12px; border-radius: 12px; border:1px solid var(--border); background: #0f172a; color: var(--text); }
+      .two { display:grid; grid-template-columns: 1fr; gap: 16px; }
+      @media(min-width: 980px){ .two { grid-template-columns: 280px 1fr; } }
+      .side { position: sticky; top: 14px; align-self: start; }
+      .toc a { display:block; padding: 8px 10px; border-radius: 10px; text-decoration:none; color: var(--muted); }
+      .toc a:hover { background: #0f172a; color: var(--text); }
+      .content { background: var(--card); border:1px solid var(--border); border-radius: 16px; padding: 16px; overflow:hidden; }
+      .content :global(h1), .content :global(h2), .content :global(h3) { scroll-margin-top: 80px; }
+      .content :global(table) { width:100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+      .content :global(th), .content :global(td) { border:1px solid var(--border); padding: 10px; vertical-align: top; }
+      .content :global(th) { background:#0f172a; }
+      .pill { display:inline-flex; padding: 3px 8px; border-radius: 999px; font-size: 12px; border:1px solid var(--border); color: var(--muted); }
+      .pill.high { color: #fecaca; border-color: #7f1d1d; }
+      .pill.medium { color: #fde68a; border-color: #78350f; }
+      .pill.low { color: #bbf7d0; border-color: #14532d; }
+      .pill.triggered { color: #bfdbfe; border-color: #1e3a8a; }
+      .issues { margin-top: 16px; display:grid; gap: 10px; }
+      .issue { border:1px solid var(--border); border-radius: 14px; padding: 12px; background: #0b1220; }
+      .issue h4 { margin: 0 0 6px 0; font-size: 14px; }
+      .issue p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.4; }
+      .muted { color: var(--muted); }
+      .hr { height:1px; background: var(--border); margin: 14px 0; }
+      .btn { display:inline-flex; gap:8px; align-items:center; padding: 10px 12px; border:1px solid var(--border); border-radius: 12px; background:#0f172a; text-decoration:none; color: var(--text); font-size: 13px; }
+      .btn:hover{ filter: brightness(1.1); }
+      code { color:#93c5fd; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <div>
+          <div style="font-weight:700; font-size:18px;">Report Portal</div>
+          <div class="badge">Pubblico via link · Generato da DOCX</div>
+        </div>
+        <a class="btn" href="/admin/">CMS /admin</a>
+      </div>
+      <div class="hr"></div>
+      <slot />
+      <div class="hr"></div>
+      <div class="muted" style="font-size:12px;">
+        Powered by Astro + Decap CMS · Deploy su Netlify
+      </div>
+    </div>
+  </body>
+</html>

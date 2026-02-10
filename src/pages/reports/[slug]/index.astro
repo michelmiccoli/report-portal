@@ -1,0 +1,41 @@
+---
+import Base from "../../../layouts/Base.astro";
+import index from "../../../generated/index.json";
+
+const { slug } = Astro.params;
+const versions = index.filter(r => r.slug === slug);
+if (!versions.length) {
+  throw new Error(`Report slug not found: ${slug}`);
+}
+
+// newest first by date (already sorted), so first is latest
+const latest = versions[0];
+---
+<Base title={`Report ${slug}`}>
+  <div>
+    <div style="font-size:18px; font-weight:700;">{latest.title}</div>
+    <div class="muted">Slug: <code>{slug}</code> · Latest: <code>{latest.version}</code></div>
+    <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn" href={latest.url}>Apri ultima versione</a>
+      <a class="btn" href="/">Torna alla libreria</a>
+    </div>
+
+    <div class="hr"></div>
+    <div style="font-weight:700; margin-bottom:10px;">Tutte le versioni</div>
+    <div class="grid">
+      {versions.map(v => (
+        <a class="card" href={v.url} style="text-decoration:none;">
+          <h3>{v.version}</h3>
+          <p class="muted">{v.date || ""}</p>
+          <div class="row">
+            <span class="kpi">Issues: {v.issuesCount}</span>
+            <span class="kpi">High: {v.high}</span>
+            <span class="kpi">Medium: {v.medium}</span>
+            <span class="kpi">Low: {v.low}</span>
+            <span class="kpi">Triggered: {v.triggered}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</Base>

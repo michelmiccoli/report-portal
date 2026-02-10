@@ -1,0 +1,143 @@
+---
+import Base from "../../../layouts/Base.astro";
+import fs from "node:fs";
+import path from "node:path";
+
+const { slug, version } = Astro.params;
+const dataPath = path.join(process.cwd(), "src", "generated", slug, `${version}.json`);
+if (!fs.existsSync(dataPath)) {
+  throw new Error(`Generated report not found: ${dataPath}. Did you run npm run build:reports?`);
+}
+const data = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+
+// Build a TOC from headings in the HTML (best effort)
+const headingRe = /<(h2|h3)[^>]*>(.*?)<\/\1>/gi;
+const toc = [];
+let m;
+while ((m = headingRe.exec(data.html)) !== null) {
+  const level = m[1];
+  const text = m[2].replace(/<[^>]+>/g, "").trim();
+  const id = text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  toc.push({ level, text, id });
+}
+// Inject ids into headings (simple replace)
+let htmlWithIds = data.html;
+for (const h of toc) {
+  // Add id attribute if missing
+  const tag = h.level;
+  const pattern = new RegExp(`<${tag}([^>]*)>\s*${h.text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\s*<\/${tag}>`);
+  htmlWithIds = htmlWithIds.replace(pattern, `<${tag}$1 id="${h.id}">${h.text}</${tag}>`);
+}
+
+function pillClass(risk) {
+  if (risk === "high") return "pill high";
+  if (risk === "medium") return "pill medium";
+  if (risk === "low") return "pill low";
+  if (risk === "triggered") return "pill triggered";
+  return "pill";
+}
+---
+<Base title={`${data.title} · ${data.version}`}>
+  <div style="display:flex; justify-content:space-between; gap: 12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:20px; font-weight:800;">{data.title}</div>
+      <div class="muted">Slug: <code>{slug}</code> · Version: <code>{version}</code> · Date: <code>{data.date || ""}</code></div>
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn" href={`/reports/${slug}`}>Pagina report (latest + versioni)</a>
+        <a class="btn" href="/">Libreria</a>
+        {data.docx && <a class="btn" href={data.docx} target="_blank" rel="noreferrer">Scarica DOCX</a>}
+      </div>
+    </div>
+    <div class="badge">Issues estratte: {data.issues?.length ?? 0}</div>
+  </div>
+
+  <div class="two" style="margin-top:16px;">
+    <div class="side">
+      <div class="card">
+        <div style="font-weight:700; margin-bottom:8px;">Indice</div>
+        <div class="toc">
+          {toc.length ? toc.map(i => (
+            <a href={`#${i.id}`}>{i.level === "h3" ? "↳ " : ""}{i.text}</a>
+          )) : <div class="muted">Nessun heading rilevato (best effort).</div>}
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <div style="font-weight:700; margin-bottom:8px;">Filtra issues</div>
+        <input id="q" class="search" placeholder="Cerca in finding/recommendation…" />
+        <div class="row" style="margin-top:10px;">
+          <button class="btn" data-risk="all" type="button">Tutte</button>
+          <button class="btn" data-risk="high" type="button">High</button>
+          <button class="btn" data-risk="medium" type="button">Medium</button>
+          <button class="btn" data-risk="low" type="button">Low</button>
+          <button class="btn" data-risk="triggered" type="button">Triggered</button>
+        </div>
+        <div class="muted" style="margin-top:10px; font-size:12px;">
+          Nota: estrazione “best effort” dalle tabelle del DOCX.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="content">
+        <div class="muted" style="margin-bottom:10px;">
+          Rendering del DOCX (HTML) + estrazione tabelle.
+        </div>
+        <div set:html={htmlWithIds}></div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="font-weight:800;">Issues (estratte)</div>
+          <div class="muted" id="count"></div>
+        </div>
+        <div class="issues" id="issues">
+          {(data.issues || []).map(i => (
+            <div class="issue" id={i.id} data-risk={i.riskLevel} data-text={`${i.finding} ${i.recommendation}`.toLowerCase()}>
+              <div style="display:flex; justify-content:space-between; gap:10px;">
+                <h4>{i.sectionTitle || "Issue"}</h4>
+                <span class={pillClass(i.riskLevel)}>{i.riskLevel}</span>
+              </div>
+              {i.finding && <p><strong>Finding:</strong> {i.finding}</p>}
+              {i.recommendation && <p style="margin-top:6px;"><strong>Recommendation:</strong> {i.recommendation}</p>}
+              <div style="margin-top:8px;">
+                <a class="muted" href={`#${i.id}`} style="font-size:12px;">Link diretto</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const q = document.getElementById('q');
+    const issues = Array.from(document.querySelectorAll('#issues .issue'));
+    const count = document.getElementById('count');
+    let risk = 'all';
+
+    function apply() {
+      const query = (q.value || '').toLowerCase().trim();
+      let shown = 0;
+      for (const el of issues) {
+        const r = el.getAttribute('data-risk');
+        const text = el.getAttribute('data-text') || '';
+        const okRisk = (risk === 'all') || (r === risk);
+        const okText = !query || text.includes(query);
+        const show = okRisk && okText;
+        el.style.display = show ? '' : 'none';
+        if (show) shown++;
+      }
+      count.textContent = `Mostrate: ${shown} / ${issues.length}`;
+    }
+
+    document.querySelectorAll('button[data-risk]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        risk = btn.getAttribute('data-risk');
+        apply();
+      });
+    });
+    q.addEventListener('input', apply);
+    apply();
+  </script>
+</Base>

@@ -1,0 +1,30 @@
+---
+import Base from "../layouts/Base.astro";
+import index from "../generated/index.json";
+---
+<Base title="Report Portal">
+  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div style="font-size:20px; font-weight:700;">Report pubblici</div>
+    <div class="muted">Condividi un link per ogni versione (es. <code>/reports/slug/v2</code>).</div>
+  </div>
+
+  <div style="margin-top:14px;" class="muted">
+    Suggerimento: usa <code>/reports/&lt;slug&gt;</code> per arrivare all’ultima versione (redirect automatico).
+  </div>
+
+  <div class="grid">
+    {index.map((r) => (
+      <a class="card" href={r.url} style="text-decoration:none;">
+        <h3>{r.title}</h3>
+        <p><span class="muted">{r.slug}</span> · <span class="muted">{r.version}</span> · <span class="muted">{r.date || ""}</span></p>
+        <div class="row">
+          <span class="kpi">Issues: {r.issuesCount}</span>
+          <span class="kpi">High: {r.high}</span>
+          <span class="kpi">Medium: {r.medium}</span>
+          <span class="kpi">Low: {r.low}</span>
+          <span class="kpi">Triggered: {r.triggered}</span>
+        </div>
+      </a>
+    ))}
+  </div>
+</Base>
