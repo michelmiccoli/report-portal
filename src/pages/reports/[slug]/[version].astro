@@ -1,32 +1,13 @@
 ---
 import Base from "../../../layouts/Base.astro";
+import index from "../../../generated/index.json";
 import fs from "node:fs";
 import path from "node:path";
 
-const { slug, version } = Astro.params;
-const dataPath = path.join(process.cwd(), "src", "generated", slug, `${version}.json`);
-if (!fs.existsSync(dataPath)) {
-  throw new Error(`Generated report not found: ${dataPath}. Did you run npm run build:reports?`);
-}
-const data = JSON.parse(fs.readFileSync(dataPath, "utf8"));
-
-// Build a TOC from headings in the HTML (best effort)
-const headingRe = /<(h2|h3)[^>]*>(.*?)<\/\1>/gi;
-const toc = [];
-let m;
-while ((m = headingRe.exec(data.html)) !== null) {
-  const level = m[1];
-  const text = m[2].replace(/<[^>]+>/g, "").trim();
-  const id = text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  toc.push({ level, text, id });
-}
-// Inject ids into headings (simple replace)
-let htmlWithIds = data.html;
-for (const h of toc) {
-  // Add id attribute if missing
-  const tag = h.level;
-  const pattern = new RegExp(`<${tag}([^>]*)>\s*${h.text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\s*<\/${tag}>`);
-  htmlWithIds = htmlWithIds.replace(pattern, `<${tag}$1 id="${h.id}">${h.text}</${tag}>`);
+export async function getStaticPaths() {
+  return index.map((r) => ({
+    params: { slug: r.slug, version: r.version },
+  }));
 }
 
 function pillClass(risk) {
@@ -36,12 +17,27 @@ function pillClass(risk) {
   if (risk === "triggered") return "pill triggered";
   return "pill";
 }
+
+const { slug, version } = Astro.params;
+
+const dataPath = path.join(process.cwd(), "src", "generated", slug, `${version}.json`);
+if (!fs.existsSync(dataPath)) {
+  throw new Error(`Generated report not found: ${dataPath}. Did you run npm run build:reports?`);
+}
+const data = JSON.parse(fs.readFileSync(dataPath, "utf8"));
+
+// Per ora niente TOC/anchor injection (evita errore Astro). Lo rimettiamo dopo in modo sicuro.
+const toc = [];
+const htmlWithIds = data.html;
 ---
+
 <Base title={`${data.title} · ${data.version}`}>
   <div style="display:flex; justify-content:space-between; gap: 12px; flex-wrap:wrap;">
     <div>
       <div style="font-size:20px; font-weight:800;">{data.title}</div>
-      <div class="muted">Slug: <code>{slug}</code> · Version: <code>{version}</code> · Date: <code>{data.date || ""}</code></div>
+      <div class="muted">
+        Slug: <code>{slug}</code> · Version: <code>{version}</code> · Date: <code>{data.date || ""}</code>
+      </div>
       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
         <a class="btn" href={`/reports/${slug}`}>Pagina report (latest + versioni)</a>
         <a class="btn" href="/">Libreria</a>
@@ -56,9 +52,9 @@ function pillClass(risk) {
       <div class="card">
         <div style="font-weight:700; margin-bottom:8px;">Indice</div>
         <div class="toc">
-          {toc.length ? toc.map(i => (
+          {toc.length ? toc.map((i) => (
             <a href={`#${i.id}`}>{i.level === "h3" ? "↳ " : ""}{i.text}</a>
-          )) : <div class="muted">Nessun heading rilevato (best effort).</div>}
+          )) : <div class="muted">Indice non generato (temporaneamente).</div>}
         </div>
       </div>
 
@@ -91,8 +87,9 @@ function pillClass(risk) {
           <div style="font-weight:800;">Issues (estratte)</div>
           <div class="muted" id="count"></div>
         </div>
+
         <div class="issues" id="issues">
-          {(data.issues || []).map(i => (
+          {(data.issues || []).map((i) => (
             <div class="issue" id={i.id} data-risk={i.riskLevel} data-text={`${i.finding} ${i.recommendation}`.toLowerCase()}>
               <div style="display:flex; justify-content:space-between; gap:10px;">
                 <h4>{i.sectionTitle || "Issue"}</h4>
@@ -137,6 +134,7 @@ function pillClass(risk) {
         apply();
       });
     });
+
     q.addEventListener('input', apply);
     apply();
   </script>

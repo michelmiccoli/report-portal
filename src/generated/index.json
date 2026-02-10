@@ -1,0 +1,15 @@
+[
+  {
+    "slug": "agricom-legal-red-flag",
+    "version": "v1",
+    "title": "Project Agricom - Legal Red Flag Report",
+    "date": "2026-02-10",
+    "url": "/reports/agricom-legal-red-flag/v1",
+    "docx": "/report-docx/Project Agricom - Legal Red Flag Report (clean).docx",
+    "issuesCount": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "triggered": 0
+  }
+]

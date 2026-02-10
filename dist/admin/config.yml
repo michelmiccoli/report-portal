@@ -1,0 +1,26 @@
+backend:
+  name: git-gateway
+  branch: main
+
+# This folder holds uploaded DOCX files
+media_folder: "public/report-docx"
+public_folder: "/report-docx"
+
+# Optional: show a simpler editorial workflow (draft -> review -> publish)
+publish_mode: editorial_workflow
+
+collections:
+  - name: "reports"
+    label: "Reports"
+    folder: "content/reports"
+    create: true
+    slug: "{{fields.slug}}__{{fields.version}}"
+    summary: "{{fields.title}} ({{fields.slug}} / {{fields.version}})"
+    fields:
+      - { label: "Slug (project/report id)", name: "slug", widget: "string", hint: "e.g. agricom-legal-red-flag" }
+      - { label: "Version", name: "version", widget: "string", hint: "e.g. v1, v2, v3 (or 2026-02-10)" }
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Date", name: "date", widget: "datetime", format: "YYYY-MM-DD", time_format: false }
+      - { label: "DOCX file", name: "docx", widget: "file", allow_multiple: false }
+      - { label: "Visibility", name: "visibility", widget: "select", options: ["public"], default: "public" }
+      - { label: "Notes (optional)", name: "notes", widget: "text", required: false }
